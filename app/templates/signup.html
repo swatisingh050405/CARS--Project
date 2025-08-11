@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Signup - CARS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/sign.css') }}" />
+</head>
+<body>
+  <div class="background-image"></div>
+  <nav class="navbar">
+    <h1><center>CARS Portal</center></h1>
+  </nav>
+  <main class="glass-form">
+    <h2>Create an Account</h2>
+    <form method="POST" action="{{ url_for('auth.signup') }}">
+      {{ form.hidden_tag() }}
+      <label for="name">Full Name</label>
+      {{ form.name(id="name", required=True) }}
+      <label for="email">Email</label>
+      {{ form.email(id="email", required=True) }}
+      <label for="password">Password</label>
+      {{ form.password(id="password", required=True) }}
+      <label for="confirm_password">Confirm Password</label>
+      {{ form.confirm_password(id="confirm_password", required=True) }}
+      <button type="submit">Sign Up</button>
+    </form>
+    <p class="login-link">
+      Already have an account?
+      <a href="{{ url_for('auth.login') }}">Log in</a>
+    </p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </main>
+</body>
+</html>

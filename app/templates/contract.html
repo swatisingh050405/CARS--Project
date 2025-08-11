@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block title %}Contract - Step 8{% endblock %}
+{% block content %}
+<style>
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 2px; /* minimal gap to input */
+    }
+    .field-row {
+        margin-bottom: 1.5rem; /* space between rows/groups */
+    }
+    .table thead th {
+        background-color: #e3f2fd; /* light blue header */
+    }
+    .is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.15rem rgba(220,53,69,.15);
+    }
+    input:read-only {
+        font-weight: 600;
+    }
+    .table-responsive {
+        padding: 1rem 0.5rem;
+        border-radius: .50rem;
+    }
+
+    .table td, .table th {
+        vertical-align: middle;
+    }
+    .table input, .table select {
+        width: 100%; 
+        min-width: 80px; 
+        box-sizing: border-box;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="card p-4 shadow-sm border-0">
+        <h1 class="mb-4 text-center"> Step 8: Contract </h1>
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <!-- Contract Info Section -->
+            <div class="row g-2 field-row">
+                <div class="col-md-4">
+                    {{ form.contract_number.label(class="form-label") }}
+                    {{ form.contract_number(class="form-control", placeholder="Enter Contract Number", required=true) }}
+                    {% for error in form.contract_number.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <br>
+                <div class="col-md-4">
+                    <label class="form-label">Short Title</label>
+                    <input type="text" class="form-control" value="{{ project.title }}" readonly>
+                </div>
+                <br>
+                <div class="col-md-4">
+                    <label class="form-label">Principal Investigator (PI)</label>
+                    <input type="text" class="form-control" value="{{ project.pi }}" readonly>
+                </div>
+               
+            </div>
+
+            <div class="row g-2 field-row">
+                <div class="col-md-6">
+                    <label class="form-label">Institute</label>
+                    <input type="text" class="form-control" value="{{ project.institute }}" readonly>
+                </div>
+                <br>
+                <div class="col-md-6">
+                    {{ form.date.label(class="form-label") }}
+                    {{ form.date(class="form-control", required=true) }}
+                    {% for error in form.date.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <br>
+            </div>
+
+            <!-- Cost Table -->
+            <h1 class="fw-bold mt-3 mb-2">Cost Details</h1>
+            <div class="table-responsive shadow-sm mb-3">
+                <table class="table table-striped table-hover table-bordered align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="costTable">
+                        {% set fixed_costs = ['Personal', 'Equipment'] %}
+                        {% for cat in fixed_costs %}
+                        <tr class="fixed-row">
+                            <td><input type="text" name="cost_category[]" class="form-control fw-semibold" value="{{ cat }}" readonly></td>
+                            <td><input type="number" min="0" step="0.01" name="cost_amount[]" class="form-control cost-input" value="{{ contract_costs[cat] if contract_costs and cat in contract_costs else '' }}"></td>
+
+                        </tr>
+                        {% endfor %}
+                        {% if contract_costs %}
+                            {% for cat, amt in contract_costs.items() %}
+                                {% if cat not in fixed_costs %}
+                                <tr>
+                                    <td><input type="text" name="cost_category[]" class="form-control" value="{{ cat }}"></td>
+                                    <td><input type="number" min="0" step="0.01" name="cost_amount[]" class="form-control cost-input" value="{{ amt }}"></td>
+                                    
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td class="text-end fw-bold">GST (18%)</td>
+                            <td colspan="2"><input type="text" id="gst-cost" class="form-control text-end" readonly></td>
+                        </tr>
+                        <tr>
+                            <td class="text-end fw-bold">Total</td>
+                            <td colspan="2"><input type="text" id="total-cost" class="form-control text-end" readonly></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="addCostBtn"><i class="bi bi-plus-circle"></i> Add Cost Row</button>
+
+            <!-- Milestones Table -->
+            <h1 class="fw-bold mt-4 mb-2">Milestones</h1>
+            <div class="table-responsive shadow-sm mb-4">
+                <table class="table table-striped table-hover table-bordered align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Milestone</th>
+                            <th>Due Date</th>
+                            <th>Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="milestoneTable">
+                        {% set fixed_milestones = ['Initial Advance', 'Milestone 1', 'Milestone 2'] %}
+                        {% if contract_milestones %}
+                            {% for ms in contract_milestones %}
+                            <tr class="{{ 'fixed-row' if loop.index <= 3 }}">
+                                <td><input type="text" name="milestone_name[]" class="form-control" value="{{ ms['description'] }}" {% if loop.index <= 3 %}readonly{% endif %}></td>
+                                <td><input type="date" name="milestone_date[]" class="form-control" value="{{ ms['due_date'] }}"></td>
+                                <td><input type="number" min="0" step="0.01" name="milestone_amount[]" class="form-control milestone-input" value="{{ ms['amount'] }}"></td>
+                               
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            {% for name in fixed_milestones %}
+                            <tr class="fixed-row">
+                                <td><input type="text" name="milestone_name[]" class="form-control fw-semibold" value="{{ name }}" readonly></td>
+                                <td><input type="date" name="milestone_date[]" class="form-control" required></td>
+                                <td><input type="number" min="0" step="0.01" name="milestone_amount[]" class="form-control milestone-input" required></td>
+                                
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2" class="text-end fw-bold">Total</td>
+                            <td colspan="2"><input type="text" id="milestoneTotal" class="form-control text-end" readonly></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" onclick="addMilestoneRow()"><i class="bi bi-plus-circle"></i> Add Milestone</button>
+
+            <!-- File Upload Section -->
+            <div class="mb-4 mt-3 table-responsive shadow-sm bg-white rounded-3 p-3">
+                {{ form.contract_pdf.label(class="form-label") }}
+                {{ form.contract_pdf(class="form-control") }}
+                {% if contract and contract.contract_pdf %}
+                    <small>Already uploaded: <a href="{{ url_for('static', filename='uploads/' ~ contract.contract_pdf) }}" target="_blank">{{ contract.contract_pdf }}</a></small>
+                {% endif %}
+                {% for error in form.contract_pdf.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <!-- Buttons aligned right -->
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="submit" name="back" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</button>
+                <button type="submit" name="save" class="btn btn-warning"><i class="bi bi-save"></i> Save</button>
+                <button type="submit" name="next" class="btn btn-success"><i class="bi bi-arrow-right"></i> Next</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+/* JS exactly as in your original for add/remove rows and totals */
+document.addEventListener("DOMContentLoaded", () => {
+    const addCostBtn = document.getElementById('addCostBtn');
+    addCostBtn.addEventListener('click', () => {
+        const table = document.getElementById('costTable');
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td><input type="text" name="cost_category[]" class="form-control" placeholder="Category" required></td>
+            <td><input type="number" min="0" step="0.01" name="cost_amount[]" class="form-control cost-input" placeholder="Amount" required></td>
+            <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="bi bi-x-circle"></i> Delete</button></td>
+        `;
+        table.appendChild(newRow);
+        newRow.querySelector('input').focus();
+        updateCostTotal();
+    });
+
+    window.addMilestoneRow = function () {
+        const table = document.getElementById('milestoneTable');
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td><input type="text" name="milestone_name[]" class="form-control" placeholder="Custom Milestone" required></td>
+            <td><input type="date" name="milestone_date[]" class="form-control" required></td>
+            <td><input type="number" min="0" step="0.01" name="milestone_amount[]" class="form-control milestone-input" placeholder="Amount" required></td>
+            <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="bi bi-x-circle"></i> Delete</button></td>
+        `;
+        table.appendChild(newRow);
+        newRow.querySelector('input').focus();
+        updateMilestoneTotal();
+    };
+
+    window.removeRow = function (btn) {
+        if (confirm('Are you sure you want to delete this row?')) {
+            btn.closest('tr').remove();
+            updateCostTotal();
+            updateMilestoneTotal();
+        }
+    };
+
+    window.updateCostTotal = function () {
+        let total = 0;
+        document.querySelectorAll('.cost-input').forEach(input => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val)) total += val;
+            input.classList.toggle('is-invalid', !(val >= 0 || input.value === ""));
+        });
+        document.getElementById('gst-cost').value = (total * 0.18).toFixed(2);
+        document.getElementById('total-cost').value = (total * 1.18).toFixed(2);
+    };
+
+    window.updateMilestoneTotal = function () {
+        let total = 0;
+        document.querySelectorAll('.milestone-input').forEach(input => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val)) total += val;
+            input.classList.toggle('is-invalid', !(val >= 0 || input.value === ""));
+        });
+        document.getElementById('milestoneTotal').value = total.toFixed(2);
+    };
+
+    document.addEventListener('input', () => {
+        updateCostTotal();
+        updateMilestoneTotal();
+    });
+
+    updateCostTotal();
+    updateMilestoneTotal();
+});
+</script>
+{% endblock %}

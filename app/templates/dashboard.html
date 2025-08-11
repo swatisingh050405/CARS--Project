@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - DRDO CARS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dash.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <h2>DRDO CARS Dashboard</h2>
+  <div class="user">
+    <img src="{{ user_avatar_url }}" alt="User Image" />
+    <span>Welcome, {{ current_user.name or current_user.email }}</span>
+    <a href="{{ url_for('auth.logout') }}" class="logout-btn" onclick="logout()">Logout</a>
+  </div>
+</nav>
+
+<!-- Dashboard Cards -->
+<div class="dashboard-container">
+  <div class="card">
+    <h3>📄 RSQR</h3>
+    <p>Fill out the multi-step CARS form</p>
+    {% if projects|length > 0 %}
+      <!-- Button will dynamically update to latest project id via JS -->
+      <form id="create-rsqr-form" action="{{ url_for('rsqr.rsqr', project_id=projects[-1].id) }}" method="get" style="margin:0;">
+        <button type="submit" class="btn-primary" id="create-rsqr-btn">➕ Create New RSQR</button>
+      </form>
+    {% else %}
+      <button class="btn-primary" disabled title="Add a project first" id="create-rsqr-btn">➕ Create New RSQR</button>
+    {% endif %}
+  </div>
+  <div class="card">
+    <h3>📁 My Projects</h3>
+    <p>You have {{ projects|length }} project(s)</p>
+  </div>
+</div>
+
+<!-- Projects Table -->
+<div class="projects-section">
+  <h2>📂 My CARS Projects</h2>
+  <button class="add-project-btn btn-primary">➕ Add Project</button>
+  <table class="projects-table" id="projectsTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Project Title</th>
+        <th>PI Name</th>
+        <th>Institute</th>
+        <th>Status</th>
+        <th>Save</th>
+        <th>View</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody id="project-table-body">
+      {% for project in projects %}
+      <tr data-id="{{ project.id }}">
+        <td>{{ project.created_date.strftime('%d/%m/%Y') if project.created_date else '—' }}</td>
+        <td contenteditable="true">{{ project.title }}</td>
+        <td contenteditable="true">{{ project.pi or '' }}</td>
+        <td contenteditable="true">{{ project.institute or '' }}</td>
+        <td>
+          <span class="status status-{{ project.status|replace(' ', '') }}">
+            {{ project.status }}
+          </span>
+        </td>
+        <td><button class="save-btn styled-btn"><i class="fas fa-save"></i> Save</button></td>
+        <td>
+          <a href="{{ url_for('rsqr.rsqr', project_id=project.id) }}">
+            <button class="view-btn styled-btn" type="button"><i class="fas fa-eye"></i> View</button>
+          </a>
+        </td>
+        <td>
+          <button class="delete-btn styled-btn"><i class="fas fa-trash"></i> Delete</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Link to merged JS -->
+<script src="{{ url_for('static', filename='js/dash.js') }}"></script>
+<script>
+/* This ensures Create New RSQR always uses latest project id */
+document.addEventListener("DOMContentLoaded", () => {
+    const createBtn = document.getElementById("create-rsqr-btn");
+    const createForm = document.getElementById("create-rsqr-form");
+    const tableBody = document.getElementById("project-table-body");
+
+    // When a new project is added via JS, update the RSQR link
+    const observer = new MutationObserver(() => {
+        const lastRow = tableBody.querySelector("tr");
+        if (lastRow) {
+            const latestId = lastRow.getAttribute("data-id");
+            if (latestId && createBtn) {
+                if (createForm) {
+                    createForm.action = `/rsqr/${latestId}`;
+                }
+                createBtn.disabled = false;
+            }
+        }
+    });
+
+    observer.observe(tableBody, { childList: true });
+});
+</script>
+
+</body>
+</html>

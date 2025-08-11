@@ -1,0 +1,104 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Background Image */
+.background-image {
+  background: url('https://wallpapers.com/images/hd/iridescent-blue-color-clean-4k-qgka36xmxw4wpdk9.jpg') no-repeat center center/cover;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  filter: brightness(0.7);
+}
+
+.navbar {
+  position: relative;
+  z-index: 1;
+  background-color: rgba(0, 51, 102, 0.85);
+  color: white;
+  padding: 16px 30px;
+  font-size: 22px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.glass-form {
+  position: relative;
+  z-index: 1;
+  max-width: 460px;
+  margin: 60px auto;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 40px 30px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  color: white;
+}
+
+.glass-form h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #ffffff;
+}
+
+.glass-form label {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.glass-form input[type="text"],
+.glass-form input[type="email"],
+.glass-form input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #003366;
+}
+
+.glass-form button {
+  margin-top: 25px;
+  width: 100%;
+  background-color: #0066cc;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.glass-form button:hover {
+  background-color: #004c99;
+}
+
+a {
+  color: #ffffff; /* blue, or choose your own */
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: #ffffff;
+}
+
+a:visited {
+  color: #ffffff; /* force visited links to same color */
+}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .form-label {
+    font-weight: 600;
+    margin-bottom: 1px;
+    display: block;
+  }
+  .input-row {
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+  }
+  input[type="text"], input[type="date"], input[type="time"], select, textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 7px 14px;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    font-size: 1rem;
+  }
+  .form-control, .form-select {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .card a {
+    margin-bottom: 1rem;
+    display: inline-block;
+    font-size: 1rem;
+  }
+</style>
+
+<div class="container">
+  <div class="card">
+    <h1>Step 2: Management Council MOM</h1>
+    <form method="POST" enctype="multipart/form-data">
+      {{ form.hidden_tag() }}
+
+      <div class="input-row">
+        <label class="form-label">
+          Date <span style="color:red">*</span>:
+        </label>
+        {{ form.council_date(class="form-control", required=True) }}
+      </div>
+
+      <div class="input-row">
+        <label class="form-label">
+          Venue <span style="color:red">*</span>:
+        </label>
+        {{ form.venue(class="form-control", required=True) }}
+      </div>
+
+      <div class="input-row">
+        <label class="form-label">
+          Time <span style="color:red">*</span>:
+        </label>
+        {{ form.time(class="form-control", required=True) }}
+      </div>
+
+      <div class="input-row">
+        <label class="form-label">
+          Chairperson <span style="color:red">*</span>:
+        </label>
+        {{ form.chairperson(class="form-control", required=True) }}
+      </div>
+
+      <div class="input-row">
+        <label class="form-label">
+          Project Title <span style="color:red">*</span>:
+        </label>
+        {{ form.title(class="form-control", required=True) }}
+      </div>
+
+      <div class="input-row">
+        <label class="form-label">
+          Project Duration (PDC in Months) <span style="color:red">*</span>:
+        </label>
+        {{ form.pdc(class="form-control", required=True) }}
+      </div>
+
+      <div class="input-row">
+        <label class="form-label">
+          Estimated Project Cost (₹ Cr) <span style="color:red">*</span>:
+        </label>
+        {{ form.cost(class="form-control", required=True) }}
+      </div>
+
+      <div class="input-row">
+        <label class="form-label">Upload PDF:</label>
+        {{ form.council_pdf(class="form-control") }}
+
+        {% if project and project.management_council and project.management_council.council_pdf %}
+          <p class="uploaded-file-link mt-2">
+            Already uploaded:
+            <a href="{{ url_for('static', filename='uploads/' ~ project.management_council.council_pdf) }}" target="_blank">
+              {{ project.management_council.council_pdf }}
+            </a>
+          </p>
+        {% endif %}
+      </div>
+
+      <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="submit" name="back" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</button>
+                <button type="submit" name="save" class="btn btn-success"><i class="bi bi-save"></i> Save</button>
+                <button type="submit" name="next" class="btn btn-primary"><i class="bi bi-arrow-right"></i> Next</button>
+            </div>
+
+    
+    </form>
+  </div>
+</div>
+{% endblock %}

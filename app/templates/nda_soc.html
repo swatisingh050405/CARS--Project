@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    /* Add right padding for NDA/SOC file inputs and uploaded links only */
+    .form-control-file, .uploaded-file-link {
+        padding-right: 20px;  /* adjust as needed for spacing */
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="card p-4 shadow-sm border-0" style="padding-right: 5rem;">
+        <h1 class="mb-4 text-center">Step 5: NDA &amp; SOC Upload</h1>
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group mb-4">
+                <label><strong>Upload NDA File</strong> <span class="text-muted">(PDF only)</span>:</label>
+                {{ form.nda_pdf(class="form-control-file") }}
+                {% if record.nda_pdf %}
+                    <p class="uploaded-file-link mt-2">
+                        Already uploaded:
+                        <a href="{{ url_for('static', filename='uploads/' ~ record.nda_pdf) }}" target="_blank">{{ record.nda_pdf }}</a>
+                    </p>
+                {% endif %}
+            </div>
+            <br>
+            <br>
+
+            <div class="form-group mb-4">
+                <label><strong>Upload SOC File</strong> <span class="text-muted">(PDF only)</span>:</label>
+                {{ form.soc_pdf(class="form-control-file") }}
+                {% if record.soc_pdf %}
+                    <p class="uploaded-file-link mt-2">
+                        Already uploaded:
+                        <a href="{{ url_for('static', filename='uploads/' ~ record.soc_pdf) }}" target="_blank">{{ record.soc_pdf }}</a>
+                    </p>
+                {% endif %}
+            </div>
+           
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="submit" name="back" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</button>
+                <button type="submit" name="save" class="btn btn-warning"><i class="bi bi-save"></i> Save</button>
+                <button type="submit" name="next" class="btn btn-success"><i class="bi bi-arrow-right"></i> Next</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

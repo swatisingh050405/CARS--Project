@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reset Password</title>
+  <link rel="stylesheet" href="static/css/reset.css" /> <!-- Tumhara apna CSS yaha link hoga -->
+</head>
+<body>
+  <div class="container">
+    <h2>Reset Password</h2>
+
+    <!-- Flask flash messages -->
+    <div class="flash-msg">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <p class="{{ category }}">{{ message }}</p>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <form method="POST">
+   <form id="reset-form" method="POST">
+  <label for="email">Email:</label>
+  <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+  <label for="new-password">New Password:</label>
+  <input type="password" id="new-password" name="new_password" placeholder="Enter new password" required>
+
+  <label for="confirm-password">Confirm Password:</label>
+  <input type="password" id="confirm-password" name="confirm_password" placeholder="Confirm new password" required>
+  <p class="note">Make sure your passwords match</p>
+
+  <button type="submit">Update Password</button>
+</form>
+
+  </div>
+
+  <script>
+    // Live password match check
+    const pass = document.getElementById('new-password');
+    const confirm = document.getElementById('confirm-password');
+    const note = document.querySelector('.note');
+
+    confirm.addEventListener('input', () => {
+      if (confirm.value !== pass.value) {
+        note.textContent = "Passwords do not match";
+        note.style.color = "red";
+      } else {
+        note.textContent = "Passwords match";
+        note.style.color = "green";
+      }
+    });
+  </script>
+</body>
+</html>

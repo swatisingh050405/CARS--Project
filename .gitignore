@@ -1,0 +1,28 @@
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment folders
+venv/
+ENV/
+.venv/
+env/
+
+# VS Code settings
+.vscode/
+
+# Environment variables / secrets
+.env
+
+# Database files (if using local DB like SQLite)
+*.sqlite3
+*.db
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

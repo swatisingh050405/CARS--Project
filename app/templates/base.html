@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}DRDO CARS{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  
+  {% block extra_css %}{% endblock %}
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-left d-flex align-items-center">
+      <img src="https://www.drdo.gov.in/drdo/sites/default/files/drdo_logo_0.png" 
+           alt="Logo" height="60" class="navbar-logo">
+      <span class="navbar-title">CARS</span>
+    </div>
+    <span class="navbar-toggle-btn" onclick="toggleNav()">☰</span>
+
+    {% block navbar_steps %}
+    <div class="navbar-steps-container" id="navbarSteps">
+      <ul class="navbar-steps">
+        <li {% if request.path.startswith('/rsqr') %}class="active"{% endif %}>RSQR</li>
+        <li {% if request.path.startswith('/management-council') %}class="active"{% endif %}>Management Council MOM</li>
+        <li {% if request.path.startswith('/offer') %}class="active"{% endif %}>Offer Evaluation Committee</li>
+        <li {% if request.path.startswith('/summary-offer') %}class="active"{% endif %}>Summary Offer</li>
+        <li {% if request.path.startswith('/nda-soc') %}class="active"{% endif %}>NDA & SOC</li>
+        <li {% if request.path.startswith('/uo-no') %}class="active"{% endif %}>UO No.</li>
+        <li {% if request.path.startswith('/usc') %}class="active"{% endif %}>USC Code</li>
+        <li {% if request.path.startswith('/contract') %}class="active"{% endif %}>Contract</li>
+        <li {% if request.path.startswith('/sanction') %}class="active"{% endif %}>Sanction Letter</li>
+        <li {% if request.path.startswith('/amendment') %}class="active"{% endif %}>Amendment Letter</li>
+      </ul>
+    </div>
+    {% endblock %}
+  </nav>
+
+  <!-- Flash messages -->
+  <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+
+  <script>
+    function toggleNav() {
+      const nav = document.getElementById("navbarSteps");
+      nav.classList.toggle("show"); // simply toggle a CSS class
+    }
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

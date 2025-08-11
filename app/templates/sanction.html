@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% block title %}Sanction Letter - Step 9{% endblock %}
+
+{% block content %}
+<style>
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 2px; /* minimal label-input gap */
+    }
+    .field-row {
+        margin-bottom: 1.5rem; /* space between field groups */
+    }
+    .table thead th {
+        background-color: #e3f2fd; /* light blue header */
+    }
+    .table td, .table th {
+        vertical-align: middle;
+    }
+    .table input, .table select {
+        width: 100%;
+        min-width: 80px;
+        box-sizing: border-box;
+    }
+  
+    .is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.15rem rgba(220,53,69,.15);
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="card p-4 shadow-sm border-0">
+        
+        <h1 class="mb-4 text-center">Step 9: Sanction </h1>
+
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <!-- Project Info -->
+            <div class="row g-2 field-row">
+                <div class="col-md-4">
+                    <label class="form-label">Project Title</label>
+                    <input type="text" class="form-control" value="{{ project.title }}" readonly>
+                </div>
+                <br>
+                <div class="col-md-4">
+                    <label class="form-label">Principal Investigator (PI)</label>
+                    <input type="text" class="form-control" value="{{ project.pi }}" readonly>
+                </div>
+                <br>
+                <div class="col-md-4">
+                    <label class="form-label">Institute</label>
+                    <input type="text" class="form-control" value="{{ project.institute }}" readonly>
+                </div>
+            </div>
+
+            <!-- Main fields -->
+            <div class="row g-2 field-row">
+                <div class="col-md-3">{{ form.start_date.label(class="form-label") }}{{ form.start_date(class="form-control", required=true) }}</div><br>
+                <div class="col-md-3">
+                    <label class="form-label">Contract Number</label>
+                    <input type="text" class="form-control" value="{{ project.contract.contract_number }}" readonly>
+                </div>
+                <br>
+                <div class="col-md-3">{{ form.project_cost.label(class="form-label") }}{{ form.project_cost(class="form-control") }}</div> <br>
+                <div class="col-md-3">{{ form.project_duration.label(class="form-label") }}{{ form.project_duration(class="form-control") }}</div>
+            </div>
+
+            <div class="row g-2 field-row">
+                <div class="col-md-3">{{ form.cars_project_no.label(class="form-label") }}{{ form.cars_project_no(class="form-control") }}</div><br>
+                <div class="col-md-3">{{ form.availability_of_funds.label(class="form-label") }}{{ form.availability_of_funds(class="form-control") }}</div><br>
+                <div class="col-md-3">
+                    <label class="form-label">UO Number</label>
+                    <input type="text" class="form-control" value="{{ project.uo_number.uo_number }}" readonly>
+                </div>
+                <br>
+                <div class="col-md-3">
+                    <label class="form-label">USC</label>
+                    <input type="text" class="form-control" value="{{ project.unique_sanction.sanction_code }}" readonly>
+                </div>
+                <br>
+            </div>
+
+            <!-- PDF Upload -->
+            <div class="mb-3">
+                {{ form.sanction_pdf.label(class="form-label") }}{{ form.sanction_pdf(class="form-control") }}
+                {% if sanction and sanction.sanction_pdf %}
+                    <small>Already uploaded: <a href="{{ url_for('static', filename='uploads/' ~ sanction.sanction_pdf) }}" target="_blank">{{ sanction.sanction_pdf }}</a></small>
+                {% endif %}
+            </div>
+
+            <!-- Expected Expenditure -->
+            <h1 class="fw-bold">Expected Expenditure</h1>
+            <table class="table table-striped table-hover table-bordered mb-2">
+                <thead>
+                    <tr><th>Category</th><th>Amount (₹)</th></tr>
+                </thead>
+                <tbody id="costTable">
+                    {% set fixed_costs = ['Personnel', 'Equipment', 'Contingencies'] %}
+                    {% for cat in fixed_costs %}
+                    <tr>
+                        <td><input type="text" name="cost_category[]" class="form-control fw-semibold" value="{{ cat }}" readonly></td>
+                        <td><input type="number" step="0.01" min="0" name="cost_amount[]" class="form-control cost-input" value="{{ sanction_costs[cat] if sanction_costs and cat in sanction_costs else '' }}"></td>
+                    </tr>
+                    {% endfor %}
+                    {% if sanction_costs %}
+                        {% for cat, amt in sanction_costs.items() %}
+                            {% if cat not in fixed_costs %}
+                            <tr>
+                                <td><input type="text" name="cost_category[]" class="form-control" value="{{ cat }}"></td>
+                                <td><input type="number" step="0.01" min="0" name="cost_amount[]" class="form-control cost-input" value="{{ amt }}"></td>
+                                <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="bi bi-x-circle"></i></button></td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td class="text-end fw-bold">Total</td>
+                        <td colspan="2"><input type="text" id="costTotal" class="form-control text-end fw-bold" readonly></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="addCostBtn"><i class="bi bi-plus-circle"></i> Add Cost Row</button>
+
+            <hr>
+            <!-- Schedule of Payments -->
+            <h1 class="fw-bold">Schedule of Payments</h1>
+            <table class="table table-striped table-hover table-bordered mb-2">
+                <thead>
+                    <tr><th>Milestone</th><th>Due Date</th><th>Amount (₹)</th></tr>
+                </thead>
+                <tbody id="scheduleTable">
+                    {% set fixed_schedule = [
+                        {'milestone': 'Initial Advance', 'due_date': ''},
+                        {'milestone': 'Milestone I', 'due_date': ''},
+                        {'milestone': 'Milestone II', 'due_date': ''},
+                    ] %}
+                    {% if sanction_schedule %}
+                        {% for entry in sanction_schedule %}
+                        <tr>
+                            <td><input type="text" name="schedule_milestone[]" class="form-control fw-semibold" value="{{ entry['milestone'] }}" {% if entry['milestone'] in fixed_schedule | map(attribute='milestone') | list %}readonly{% endif %}></td>
+                            <td><input type="date" name="schedule_date[]" class="form-control" value="{{ entry['date'] }}"></td>
+                            <td><input type="number" step="0.01" min="0" name="schedule_amount[]" class="form-control schedule-input" value="{{ entry['amount'] }}"></td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        {% for entry in fixed_schedule %}
+                        <tr>
+                            <td><input type="text" name="schedule_milestone[]" class="form-control fw-semibold" value="{{ entry['milestone'] }}" readonly></td>
+                            <td><input type="date" name="schedule_date[]" class="form-control"></td>
+                            <td><input type="number" step="0.01" min="0" name="schedule_amount[]" class="form-control schedule-input"></td>
+                        </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td class="text-end fw-bold" colspan="2">Total</td>
+                        <td colspan="2"><input type="text" id="scheduleTotal" class="form-control text-end fw-bold" readonly></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="addScheduleBtn"><i class="bi bi-plus-circle"></i> Add Payment Row</button>
+
+            <!-- Milestone Schedule (CARS) -->
+            <h5 class="fw-bold">Milestone Schedule (CARS)</h5>
+            <table class="table table-striped table-hover table-bordered mb-2">
+                <thead><tr><th>Milestone</th><th>Deliverables</th><th>Duration (Months)</th></tr></thead>
+                <tbody id="carsTable">
+                    {% set fixed_cars = [
+                        {'description': 'Milestone 1', 'deliverables': '', 'duration_months': ''},
+                        {'description': 'Milestone 2', 'deliverables': '', 'duration_months': ''},
+                        {'description': 'Milestone 3', 'deliverables': '', 'duration_months': ''}
+                    ] %}
+                    {% if sanction_cars %}
+                        {% for entry in sanction_cars %}
+                        <tr>
+                            <td><input type="text" name="cars_milestone[]" class="form-control fw-semibold" value="{{ entry['description'] }}" {% if entry['description'] in fixed_cars | map(attribute='description') | list %}readonly{% endif %}></td>
+                            <td><input type="text" name="cars_deliverable[]" class="form-control" value="{{ entry['deliverables'] }}"></td>
+                            <td><input type="number" min="0" step="1" name="cars_duration[]" class="form-control cars-duration-input" value="{{ entry['duration_months'] }}"></td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        {% for entry in fixed_cars %}
+                        <tr>
+                            <td><input type="text" name="cars_milestone[]" class="form-control fw-semibold" value="{{ entry['description'] }}" readonly></td>
+                            <td><input type="text" name="cars_deliverable[]" class="form-control"></td>
+                            <td><input type="number" min="0" step="1" name="cars_duration[]" class="form-control cars-duration-input"></td>
+                        </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="addCarsBtn"><i class="bi bi-plus-circle"></i> Add Milestone Row</button>
+
+            <!-- Action Buttons Right-Aligned -->
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="submit" name="back" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</button>
+                <button type="submit" name="save" class="btn btn-success"><i class="bi bi-save"></i> Save</button>
+                <button type="submit" name="next" class="btn btn-primary"><i class="bi bi-arrow-right"></i> Next</button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById('addCostBtn').addEventListener('click', function () {
+        const table = document.getElementById('costTable');
+        const row = document.createElement('tr');
+        row.innerHTML = `<td><input type="text" name="cost_category[]" class="form-control" placeholder="Custom Category" required></td>
+                         <td><input type="number" min="0" step="0.01" name="cost_amount[]" class="form-control cost-input" required></td>
+                         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">
+                                <i class="bi bi-x-circle"></i></button></td>`;
+        table.appendChild(row); row.querySelector('input').focus();
+        updateCostTotal();
+    });
+    document.getElementById('addScheduleBtn').addEventListener('click', function () {
+        const table = document.getElementById('scheduleTable');
+        const row = document.createElement('tr');
+        row.innerHTML = `<td><input type="text" name="schedule_milestone[]" class="form-control" placeholder="Milestone"></td>
+                         <td><input type="date" name="schedule_date[]" class="form-control" required></td>
+                         <td><input type="number" min="0" step="0.01" name="schedule_amount[]" class="form-control schedule-input" required></td>
+                         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">
+                                <i class="bi bi-x-circle"></i></button></td>`;
+        table.appendChild(row); row.querySelector('input').focus();
+        updateScheduleTotal();
+    });
+    document.getElementById('addCarsBtn').addEventListener('click', function () {
+        const table = document.getElementById('carsTable');
+        const row = document.createElement('tr');
+        row.innerHTML = `<td><input type="text" name="cars_milestone[]" class="form-control" placeholder="Milestone"></td>
+                         <td><input type="text" name="cars_deliverable[]" class="form-control" placeholder="Deliverable"></td>
+                         <td><input type="number" min="0" step="1" name="cars_duration[]" class="form-control cars-duration-input" required></td>
+                         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">
+                                <i class="bi bi-x-circle"></i></button></td>`;
+        table.appendChild(row); row.querySelector('input').focus();
+    });
+    window.removeRow = function (btn) {
+        if (confirm('Delete this row?')) { 
+            btn.closest('tr').remove(); 
+            updateCostTotal(); 
+            updateScheduleTotal(); 
+        }
+    };
+    window.updateCostTotal = function () {
+        let total = 0;
+        document.querySelectorAll('.cost-input').forEach(input => {
+            const val = parseFloat(input.value); 
+            if (!isNaN(val)) total += val;
+            input.classList.toggle('is-invalid', !(val >= 0 || input.value === ""));
+        });
+        document.getElementById('costTotal').value = total.toFixed(2);
+    };
+    window.updateScheduleTotal = function () {
+        let total = 0;
+        document.querySelectorAll('.schedule-input').forEach(input => {
+            const val = parseFloat(input.value); 
+            if (!isNaN(val)) total += val;
+            input.classList.toggle('is-invalid', !(val >= 0 || input.value === ""));
+        });
+        document.getElementById('scheduleTotal').value = total.toFixed(2);
+    };
+    document.addEventListener('input', () => { updateCostTotal(); updateScheduleTotal(); });
+    updateCostTotal(); updateScheduleTotal();
+});
+</script>
+{% endblock %}
