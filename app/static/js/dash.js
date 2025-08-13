@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const createRsqrForm = document.getElementById("create-rsqr-form");
     const createRsqrBtn = document.getElementById("create-rsqr-btn");
 
-    // ADD PROJECT
+    // ========== ADD PROJECT ==========
     document.querySelector(".add-project-btn").addEventListener("click", () => {
         const today = new Date().toISOString().split('T')[0];
 
@@ -34,17 +34,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
                 tbody.prepend(row);
 
-                // Update RSQR button to use the new project
-                if (createRsqrForm) {
-                    createRsqrForm.action = `/rsqr/${data.project_id}`;
-                    createRsqrBtn.disabled = false;
-                }
+                // ✅ Enable RSQR for new project
+                updateRsqrButton(data.project_id);
             }
         })
         .catch(err => console.error("Add Project Error:", err));
     });
 
-    // SAVE PROJECT
+    // ========== SAVE PROJECT ==========
     tbody.addEventListener("click", (e) => {
         if (e.target.closest(".save-btn")) {
             const row = e.target.closest("tr");
@@ -68,6 +65,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     row.querySelector(".status").textContent = data.status;
                     row.querySelector(".status").className = `status status-${data.status.replace(/\s/g, '')}`;
                     alert("✅ Project saved successfully");
+
+                    // ✅ Make RSQR point to saved project
+                    updateRsqrButton(projectId);
                 } else {
                     alert("❌ Failed to save project");
                 }
@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // DELETE PROJECT
+    // ========== DELETE PROJECT ==========
     tbody.addEventListener("click", (e) => {
         if (e.target.closest(".delete-btn")) {
             const row = e.target.closest("tr");
@@ -97,6 +97,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.success) {
                     row.remove();
                     alert("🗑️ Project deleted successfully");
+
+                    const remainingRows = tbody.querySelectorAll("tr");
+                    if (remainingRows.length === 0) {
+                        // No projects left → disable RSQR
+                        disableRsqrButton();
+                    } else {
+                        // Always pick the first (topmost) row as latest
+                        const latestId = remainingRows[0].dataset.id;
+                        updateRsqrButton(latestId);
+                    }
                 } else {
                     alert("❌ Failed to delete project");
                 }
@@ -104,9 +114,32 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(err => console.error("Delete Project Error:", err));
         }
     });
-});
 
-// LOGOUT
-function logout() {
-    window.location.href = "/logout";
-}
+    // ========== RSQR Button Handlers ==========
+    function updateRsqrButton(projectId) {
+        if (createRsqrForm) {
+            createRsqrForm.action = `/rsqr/${projectId}`;
+        }
+        if (createRsqrBtn) {
+            createRsqrBtn.disabled = false;
+        }
+    }
+
+    function disableRsqrButton() {
+        if (createRsqrForm) {
+            createRsqrForm.action = "#";
+        }
+        if (createRsqrBtn) {
+            createRsqrBtn.disabled = true;
+        }
+    }
+
+    // ========== Logout ==========
+    const logoutBtn = document.querySelector(".logout-btn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = "/logout";
+        });
+    }
+});

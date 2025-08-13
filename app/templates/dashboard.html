@@ -85,30 +85,7 @@
 
 <!-- Link to merged JS -->
 <script src="{{ url_for('static', filename='js/dash.js') }}"></script>
-<script>
-/* This ensures Create New RSQR always uses latest project id */
-document.addEventListener("DOMContentLoaded", () => {
-    const createBtn = document.getElementById("create-rsqr-btn");
-    const createForm = document.getElementById("create-rsqr-form");
-    const tableBody = document.getElementById("project-table-body");
 
-    // When a new project is added via JS, update the RSQR link
-    const observer = new MutationObserver(() => {
-        const lastRow = tableBody.querySelector("tr");
-        if (lastRow) {
-            const latestId = lastRow.getAttribute("data-id");
-            if (latestId && createBtn) {
-                if (createForm) {
-                    createForm.action = `/rsqr/${latestId}`;
-                }
-                createBtn.disabled = false;
-            }
-        }
-    });
-
-    observer.observe(tableBody, { childList: true });
-});
-</script>
 
 </body>
 </html>
